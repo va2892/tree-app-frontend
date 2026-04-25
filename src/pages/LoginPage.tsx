@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginApi } from "../api/authApi";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -7,27 +8,13 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const login = async () => {
-    const res = await fetch("/api/account/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email,
-        password
-      })
-    });
-
-    if (!res.ok) {
+    try {
+      const data = await loginApi(email, password);
+      localStorage.setItem("token", data.token);
+      navigate("/");
+    } catch {
       alert("Login failed");
-      return;
     }
-
-    const data = await res.json();
-
-    localStorage.setItem("token", data.accessToken);
-
-    navigate("/");
   };
 
   return (

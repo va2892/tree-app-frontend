@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { addComment, deleteComment, editComment, getCommentTree } from "../api/commentApi";
 
 export default function CommentNode({ node, reload, postId }: any) {
   const [text, setText] = useState(node.content);
@@ -7,15 +8,8 @@ export default function CommentNode({ node, reload, postId }: any) {
   const token = localStorage.getItem("token");
 
   const loadChildren = async () => {
-    const res = await fetch(`/api/comment/${node.id}/tree`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-
-    const data = await res.json();
+    const data = await getCommentTree(node.id);
     setChildren(data);
-    console.log(text, data)
   };
 
   useEffect(() => {
@@ -28,46 +22,18 @@ export default function CommentNode({ node, reload, postId }: any) {
   }, [node.id]);
 
   const add = async () => {
-    await fetch(`/api/post/${postId}/comment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({ content: "New comment", parentId: node.id }),
-    });
-    reload();
-    loadChildren();
+    await addComment(postId, "New comment", node.id);
+    await loadChildren(); 
   };
-
+  
   const remove = async () => {
-    await fetch(`/api/comment/${node.id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-    });
-    if (children.length > 0) {
-      setText(null);
-    }
-    reload();
+    await deleteComment(node.id);
+    reload(); 
   };
-
+  
   const edit = async () => {
-    if (text && !(text.trim().length === 0)) {
-      await fetch(`/api/comment/${node.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({ content: text }),
-      });
-      reload();
-    } else {
-      alert('Комментарий не может быть пустым')
-    }
+    await editComment(node.id, text);
+    reload(); 
   };
 
   return (
